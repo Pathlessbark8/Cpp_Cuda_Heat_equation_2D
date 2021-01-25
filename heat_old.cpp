@@ -8,19 +8,6 @@ using namespace std::chrono;
 using namespace std;
 
 
-__global__ void Calculate(double *T,double *T_old,int r,int n)
-{
-    int j = blockDim.x*(blockIdx.x) + threadIdx.x;
-    int k = blockDim.y*(blockIdx.y) + threadIdx.y;
-
-    if(j*n+k>n && j*n<=n*n)
-    {
-        
-        *(T+j*n+k)=*(T_old+j*n+k)+r*( *(T_old+(j+1)*n+k)+*(T_old+j*n+k+1)+*(T_old+(j-1)*n+k)+*(T_old+j*n+k-1)- 4* *(T_old+j*n+k));
-    }
-
-}
-
 
 int main(){
     int n,ntime;
@@ -87,8 +74,6 @@ auto start = high_resolution_clock::now();
             }
         }
     }
-
-
     
     fstream foutw;
     foutw.open("int.dat",ios::out);
@@ -104,25 +89,6 @@ auto start = high_resolution_clock::now();
   
     r=(nu*dt)/pow(delta,2);
 
-    
-
-    // double*devPtr_T;
-    // double*devPtr_T_old;
-    // size_t pitch_T;
-    // size_t pitch_T_old;
-    // size_t host_pitch_T = n * sizeof(double);
-    // size_t host_pitch_T_old = n * sizeof(double);
-
-
-
-    // cudaMallocPitch(&devPtr_T,&pitch_T,n * sizeof(double),n);
-    // cudaMallocPitch(&devPtr_T_old,&pitch_T_old,n * sizeof(double),n);
-
-    double *dev_T;
-    double *dev_t_old;
-    
-    cudaMalloc(&dev_T,(n+1)*(n+1)*sizeof(double));
-    cudaMalloc(&dev_t_old,(n+1)*(n+1)*sizeof(double));
 
     for(int i=1;i<=ntime;++i)
     {
@@ -135,29 +101,13 @@ auto start = high_resolution_clock::now();
             }
         }
 
-        // cudaMemcpy2D(devPtr_T, pitch_T, &T, host_pitch_T, n*sizeof(double) , n, cudaMemcpyHostToDevice);
-        // cudaMemcpy2D(devPtr_T_old, pitch_T_old,&T_old, host_pitch_T_old, n*sizeof(double) , n, cudaMemcpyHostToDevice);
-    
-    
-        dim3 a(32,32);
-        dim3 b(n/a.x,n/a.y);
-        cudaMemcpy(dev_T, T, (n+1)*(n+1)*sizeof(double), cudaMemcpyHostToDevice);
-        cudaMemcpy(dev_t_old, T_old, (n+1)*(n+1)*sizeof(double), cudaMemcpyHostToDevice);
-
-        Calculate<<<a,b>>>(dev_T,dev_t_old,r,n);
-
-        cudaDeviceSynchronize();
-        cudaError_t error = cudaGetLastError();
-        if (error != cudaSuccess) {
-        fprintf(stderr, "ERROR: %s \n", cudaGetErrorString(error));
+        for(int j=2;j<n;j++)
+        {
+            for(int k=2;k<n;k++)
+            {
+                *(T+j*n+k)=*(T_old+j*n+k)+r*( *(T_old+(j+1)*n+k)+*(T_old+j*n+k+1)+*(T_old+(j-1)*n+k)+*(T_old+j*n+k-1)- 4* *(T_old+j*n+k));
+            }
         }
-
-        cudaMemcpy(T, dev_T, (n+1)*(n+1)*sizeof(double), cudaMemcpyDeviceToHost);
-        cudaMemcpy(T_old, dev_t_old, (n+1)*(n+1)*sizeof(double), cudaMemcpyDeviceToHost);
-
-        // cudaMemcpy2D(T,host_pitch_T, devPtr_T, pitch_T, n*sizeof(double), n, cudaMemcpyDeviceToHost);
-        // cudaMemcpy2D(T_old, host_pitch_T_old, devPtr_T_old, pitch_T_old, n*sizeof(double), n, cudaMemcpyDeviceToHost);
-
     }
 
 
