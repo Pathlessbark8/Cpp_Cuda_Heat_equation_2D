@@ -75,24 +75,24 @@ auto start = high_resolution_clock::now();
         }
     }
     
-    fstream foutw;
-    foutw.open("int.dat",ios::out);
+    // fstream foutw;
+    // foutw.open("int.dat",ios::out);
     
-    for(int i=1;i<n+1;++i)
-    {
-        for(int j=1;j<n+1;++j)
-        {
-            foutw<<*(x+i*n+j)<<" "<<*(y+i*n+j)<<" "<<*(T+i*n+j)<<"\n";
-        }
-    }
-    foutw.close();
+    // for(int i=1;i<n+1;++i)
+    // {
+    //     for(int j=1;j<n+1;++j)
+    //     {
+    //         foutw<<*(x+i*n+j)<<" "<<*(y+i*n+j)<<" "<<*(T+i*n+j)<<"\n";
+    //     }
+    // }
+    // foutw.close();
   
     r=(nu*dt)/pow(delta,2);
 
 
     for(int i=1;i<=ntime;++i)
     {
-        cout<<"time_it:"<<i<<endl;
+        //cout<<"time_it:"<<i<<endl;
         for(int j=1;j<n+1;++j)
         {
             for(int k=1;k<n+1;++k)
@@ -128,5 +128,6 @@ auto start = high_resolution_clock::now();
         }
     }
     fout.close();
+    delete x,y,T,T_old;
     return 0;
 }

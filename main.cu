@@ -1,4 +1,4 @@
-#include<iostream>
+// #include<iostream>
 #include<fstream>
 #include<math.h>
 #include<vector>
@@ -118,16 +118,20 @@ auto start = high_resolution_clock::now();
     // cudaMallocPitch(&devPtr_T,&pitch_T,n * sizeof(double),n);
     // cudaMallocPitch(&devPtr_T_old,&pitch_T_old,n * sizeof(double),n);
 
+    // double *dev_T;
+    // double *dev_t_old;
+
+
+    double *temp;
     double *dev_T;
     double *dev_t_old;
+
+
     
     cudaMalloc(&dev_T,(n+1)*(n+1)*sizeof(double));
     cudaMalloc(&dev_t_old,(n+1)*(n+1)*sizeof(double));
 
-    for(int i=1;i<=ntime;++i)
-    {
-        cout<<"time_it:"<<i<<endl;
-        for(int j=1;j<n+1;++j)
+    for(int j=1;j<n+1;++j)
         {
             for(int k=1;k<n+1;++k)
             {
@@ -135,16 +139,26 @@ auto start = high_resolution_clock::now();
             }
         }
 
+    for(int i=1;i<=ntime;++i)
+    {
+        //cout<<"time_it:"<<i<<endl;
+        
+       
+        temp=T;
+        T=T_old;
+        T_old=temp;
+
         // cudaMemcpy2D(devPtr_T, pitch_T, &T, host_pitch_T, n*sizeof(double) , n, cudaMemcpyHostToDevice);
         // cudaMemcpy2D(devPtr_T_old, pitch_T_old,&T_old, host_pitch_T_old, n*sizeof(double) , n, cudaMemcpyHostToDevice);
     
-    
-        dim3 a(32,32);
+        // cudaMalloc(&dev_T,(n+1)*(n+1)*sizeof(double));
+        // cudaMalloc(&dev_t_old,(n+1)*(n+1)*sizeof(double));
+        dim3 a(32,16);
         dim3 b(n/a.x,n/a.y);
         cudaMemcpy(dev_T, T, (n+1)*(n+1)*sizeof(double), cudaMemcpyHostToDevice);
         cudaMemcpy(dev_t_old, T_old, (n+1)*(n+1)*sizeof(double), cudaMemcpyHostToDevice);
 
-        Calculate<<<a,b>>>(dev_T,dev_t_old,r,n);
+        Calculate<<<b,a>>>(dev_T,dev_t_old,r,n);
 
         cudaDeviceSynchronize();
         cudaError_t error = cudaGetLastError();
@@ -153,19 +167,21 @@ auto start = high_resolution_clock::now();
         }
 
         cudaMemcpy(T, dev_T, (n+1)*(n+1)*sizeof(double), cudaMemcpyDeviceToHost);
-        cudaMemcpy(T_old, dev_t_old, (n+1)*(n+1)*sizeof(double), cudaMemcpyDeviceToHost);
-
+        // cudaMemcpy(T_old, dev_t_old, (n+1)*(n+1)*sizeof(double), cudaMemcpyDeviceToHost);
+        
         // cudaMemcpy2D(T,host_pitch_T, devPtr_T, pitch_T, n*sizeof(double), n, cudaMemcpyDeviceToHost);
         // cudaMemcpy2D(T_old, host_pitch_T_old, devPtr_T_old, pitch_T_old, n*sizeof(double), n, cudaMemcpyDeviceToHost);
 
     }
 
+    cudaFree(&dev_T);
+    cudaFree(&dev_t_old);
 
     auto stop = high_resolution_clock::now(); 
     auto duration = duration_cast<milliseconds>(stop - start); 
 
-    cout<<"simulation completed"<<endl;
-    cout<<"Time_Taken : "<<duration.count()<<endl;
+    printf("simulation completed\n");
+    printf("Time_Taken :  %d\n",duration.count());
 
     fstream fout;
     fout.open("soln.dat",ios::out);
@@ -178,5 +194,6 @@ auto start = high_resolution_clock::now();
         }
     }
     fout.close();
+    delete x,y,T,T_old,temp;
     return 0;
 }
