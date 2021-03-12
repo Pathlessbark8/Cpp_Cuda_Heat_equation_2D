@@ -4,7 +4,7 @@ SECONDS=0
 loop_cnt=0
 rm -rf ./a.out
 # rm -rf ./cpp.perf
-# rm -rf ./cuda.perf
+rm -rf ./cuda.perf
 
 ntimes=$1
 while [ $loop_cnt -lt $ntimes ]
